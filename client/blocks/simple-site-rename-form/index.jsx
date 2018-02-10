@@ -29,6 +29,7 @@ export class SimpleSiteRenameForm extends Component {
 	state = {
 		showDialog: false,
 		domainFieldValue: '',
+		inputError: false,
 	};
 
 	onConfirm = () => {
@@ -57,7 +58,11 @@ export class SimpleSiteRenameForm extends Component {
 	};
 
 	onFieldChange = event => {
-		this.setState( { domainFieldValue: get( event, 'target.value' ) } );
+		const domainFieldValue = get( event, 'target.value', '' );
+		this.setState( {
+			domainFieldValue,
+			inputError: domainFieldValue.match( /[^\da-zA-Z]/ ),
+		} );
 	};
 
 	render() {
@@ -67,6 +72,7 @@ export class SimpleSiteRenameForm extends Component {
 		const isDisabled =
 			! isWPCOM ||
 			! this.state.domainFieldValue ||
+			this.state.inputError ||
 			this.state.domainFieldValue === currentDomainPrefix;
 
 		return (
@@ -82,6 +88,7 @@ export class SimpleSiteRenameForm extends Component {
 					<Card className="simple-site-rename-form__content">
 						<FormSectionHeading>{ translate( 'Edit Domain Name' ) }</FormSectionHeading>
 						<FormTextInputWithAffixes
+							isError={ this.state.inputError }
 							type="text"
 							value={ this.state.domainFieldValue }
 							suffix={ currentDomainSuffix }
