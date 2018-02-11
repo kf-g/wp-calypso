@@ -15,9 +15,17 @@ import {
 	SITE_RENAME_REQUEST_FAILURE,
 	SITE_RENAME_REQUEST_SUCCESS,
 } from 'state/action-types';
-import { successNotice } from 'state/notices/actions';
+import { errorNotice, successNotice } from 'state/notices/actions';
 import { domainManagementEdit } from 'my-sites/domains/paths';
 import { requestSite } from 'state/sites/actions';
+
+export const getErrorNotice = message =>
+	errorNotice( message, {
+		id: 'siteRenameUnsuccessful',
+		duration: 5000,
+		showDismiss: true,
+		isPersistent: true,
+	} );
 
 export const requestSiteRename = ( siteId, newBlogName, discard ) => dispatch => {
 	dispatch( {
@@ -54,9 +62,27 @@ export const requestSiteRename = ( siteId, newBlogName, discard ) => dispatch =>
 			} );
 		} )
 		.catch( error => {
+			if ( error.statusCode === 500 ) {
+				dispatch( getErrorNotice( translate( 'Sorry, something generic (500)' ) ) );
+			}
+
+			if ( error.statusCode === 403 ) {
+				dispatch(
+					getErrorNotice(
+						translate( "Sorry, it looks like you don't have permission to rename this site (403)" )
+					)
+				);
+			}
+
+			if ( error.statusCode === 400 ) {
+				dispatch(
+					getErrorNotice( translate( 'Sorry, it looks like this domain name is invalid (400)' ) )
+				);
+			}
+
 			dispatch( {
 				type: SITE_RENAME_REQUEST_FAILURE,
-				error: error.message,
+				error,
 				siteId,
 			} );
 		} );
